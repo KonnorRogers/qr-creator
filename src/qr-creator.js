@@ -3,13 +3,14 @@ let qrCodeGenerator = null;
 
 // Library interface
 export default class QrCreator {
-    static render(config, $element) {
-        qrCodeGenerator(config, $element);
+    static render(config, $element, callback) {
+        qrCodeGenerator(config, $element, callback);
     }
 }
 // avoid that closure compiler strips these away
 QrCreator['render'] = QrCreator.render;
-self['QrCreator'] = QrCreator;
+// Make it safe for Node.
+globalThis['QrCreator'] = QrCreator;
 
 
 /*! jquery-qrcode v0.14.0 - https://larsjung.de/jquery-qrcode/ */
@@ -138,15 +139,25 @@ self['QrCreator'] = QrCreator;
         }
     }
 
-    function drawModules(qr, context, settings) {
+    function drawModules(qr, context, settings, corners) {
         var moduleCount = qr.moduleCount,
-            moduleSize = settings.size / moduleCount,
+            moduleSize = (settings.size) / moduleCount,
             row,
             col;
 
         context.beginPath();
+
+        const cornerOffset = 7 + settings.quiet;
+
         for (row = 0; row < moduleCount; row += 1) {
             for (col = 0; col < moduleCount; col += 1) {
+                const isCorner = col < cornerOffset && row < cornerOffset ||
+                    col >= moduleCount - cornerOffset && row < cornerOffset ||
+                    col < cornerOffset && row >= moduleCount - cornerOffset;
+                if (isCorner !== corners) {
+                    continue;
+                }
+
                 var l = settings.left + col * moduleSize,
                     t = settings.top + row * moduleSize,
                     w = moduleSize;
@@ -155,12 +166,12 @@ self['QrCreator'] = QrCreator;
             }
         }
 
-        setFill(context, settings);
+        setFill(context, settings, corners);
         context.fill();
     }
 
-    function setFill(context, settings) {
-        const fill = settings.fill;
+    function setFill(context, settings, corners) {
+        const fill = corners ? (settings.cornerFill || settings.fill) : settings.fill;
         if (typeof fill === 'string') {
             // solid color
             context.fillStyle = fill;
@@ -185,7 +196,7 @@ self['QrCreator'] = QrCreator;
     }
 
     // Draws QR code to the given `canvas` and returns it.
-    function drawOnCanvas(canvas, settings) {
+    function drawOnCanvas(qr, canvas, settings) {
         var qr = createMinQRCode(settings.text, settings.ecLevel, settings.minVersion, settings.maxVersion, settings.quiet);
         if (!qr) {
             return null;
@@ -194,17 +205,20 @@ self['QrCreator'] = QrCreator;
         var context = canvas.getContext('2d');
 
         drawBackground(qr, context, settings);
-        drawModules(qr, context, settings);
+        // with corners
+        drawModules(qr, context, settings, true);
+        // without corners
+        drawModules(qr, context, settings, false);
 
         return canvas;
     }
 
     // Returns a `canvas` element representing the QR code for the given settings.
-    function createCanvas(settings) {
+    function createCanvas(qr, settings) {
         var $canvas = document.createElement('canvas');
         $canvas.width = settings.size;
         $canvas.height = settings.size;
-        return drawOnCanvas($canvas, settings);
+        return drawOnCanvas(qr, $canvas, settings);
     }
 
     // Plugin
@@ -229,6 +243,7 @@ self['QrCreator'] = QrCreator;
 
         // code color or image element
         'fill': '#000',
+        'cornerFill': '#000',
 
         // background color, `null` for transparent background
         'background': null,
@@ -241,12 +256,13 @@ self['QrCreator'] = QrCreator;
 
         // quiet zone in modules
         'quiet': 0,
-
+        'image': null,
+        'imageEcCover': 0.5
     };
 
     // // Register the plugin
     // // -------------------
-    qrCodeGenerator = function(options, $element) {
+    qrCodeGenerator = function(options, $element, callback) {
         var settings = {};
         Object.assign(settings, defaults, options);
         // map real names to minifyable properties used by closure compiler
@@ -262,16 +278,108 @@ self['QrCreator'] = QrCreator;
         settings.radius = settings['radius'];
         settings.quiet = settings['quiet'];
 
-        if ($element instanceof HTMLCanvasElement) {
-            if ($element.width !== settings.size || $element.height !== settings.size) {
-                $element.width = settings.size;
-                $element.height = settings.size;
+        settings.cornerFill = settings['cornerFill'] || settings.fill;
+        settings.image = settings['image'];
+        settings.imageBackground = settings['imageBackground'];
+        settings.imageEcCover = settings['imageEcCover'];
+        settings.imagePadding = settings['imagePadding'];
+
+        var qr = createMinQRCode(settings.text, settings.ecLevel, settings.minVersion, settings.maxVersion, settings.quiet);
+        if (!qr) {
+            return;
+        }
+        callback = callback || function() {};
+        const render = function() {
+            var canvasElement = $element;
+            if ($element instanceof HTMLCanvasElement) {
+                if ($element.width !== settings.size || $element.height !== settings.size) {
+                    $element.width = settings.size;
+                    $element.height = settings.size;
+                }
+                $element.getContext('2d').clearRect(0, 0, $element.width, $element.height);
+                drawOnCanvas(qr, $element, settings);
+            } else {
+                canvasElement = createCanvas(qr, settings);
+                $element.appendChild(canvasElement);
             }
-            $element.getContext('2d').clearRect(0, 0, $element.width, $element.height);
-            drawOnCanvas($element, settings);
+            return canvasElement;
+        }
+        if (settings.image) {
+            const img = new Image();
+            img.onload = function() {
+                const quietModuleCount = qr.moduleCount - settings.quiet * 2
+                const moduleSize = settings.size / quietModuleCount;
+                const ratio = img.naturalWidth / img.naturalHeight;
+                let maxImageWidth = settings.size * settings.imageEcCover
+                maxImageWidth = Math.min(maxImageWidth, maxImageWidth * ratio)
+
+                let maxImageHeight = settings.size * settings.imageEcCover
+                maxImageHeight = Math.min(maxImageHeight, maxImageHeight / ratio)
+                const dataPixels = quietModuleCount * quietModuleCount - (49 * 3 + 25);
+                const area = ({
+                    'L': 0.07,
+                    'M': 0.15,
+                    'Q': 0.25,
+                    'H': 0.3
+                }[settings.ecLevel] * settings.imageEcCover * dataPixels) | 0;
+                var imageModuleWidth = Math.min(quietModuleCount, Math.sqrt(area * ratio) | 0, maxImageWidth);
+                var imageModuleHeight = (imageModuleWidth / ratio) | 0;
+                if (imageModuleHeight > quietModuleCount) {
+                    imageModuleHeight = quietModuleCount;
+                    imageModuleWidth = (imageModuleHeight * ratio) | 0;
+                }
+
+                imageModuleHeight = Math.min(imageModuleHeight, maxImageHeight)
+                const imageModuleLeft = ((qr.moduleCount / 2 - imageModuleWidth / 2) | 0);
+                const imageModuleTop = ((qr.moduleCount / 2 - imageModuleHeight / 2) | 0);
+                const isDark = qr.isDark;
+                qr.isDark = function(row, col) {
+                    if (imageModuleLeft <= col && col < imageModuleLeft + imageModuleWidth &&
+                        imageModuleTop <= row && row < imageModuleTop + imageModuleHeight) {
+                        return false;
+                    }
+                    return isDark(row, col);
+                }
+
+                const imageFloatModuleWidth = Math.min(imageModuleWidth, imageModuleHeight * ratio) - settings.quiet;
+                const imageFloatModuleHeight = Math.min(imageModuleHeight, imageModuleWidth / ratio) - settings.quiet;
+                const imageLeft = imageModuleLeft + (imageModuleWidth - imageFloatModuleWidth)/2 - settings.quiet;
+                const imageTop = imageModuleTop + (imageModuleHeight - imageFloatModuleHeight)/2 - settings.quiet;
+                let left = imageLeft * moduleSize
+                let top = imageTop * moduleSize
+                let width = imageFloatModuleWidth * moduleSize
+                let height = imageFloatModuleHeight * moduleSize
+
+                var canvas = render();
+                const context = canvas.getContext('2d');
+                context.fillStyle = settings.imageBackground || "transparent";
+
+                // Padding. Should this be configurable??
+                // context.fillRect(
+                //     left - settings.imagePadding.left,
+                //     top - settings.imagePadding.top,
+                //     width + (settings.imagePadding.left + settings.imagePadding.right),
+                //     height + (settings.imagePadding.top + settings.imagePadding.bottom)
+                // );
+                context.fillRect(
+                    left - 4,
+                    top - 4,
+                    width + 8,
+                    height + 8
+                );
+                context.drawImage(img,
+                    left,
+                    top,
+                    width,
+                    height
+                );
+                callback()
+            }
+            img.onerror = callback;
+            img.src = settings.image;
         } else {
-            const $canvas = createCanvas(settings);
-            $element.appendChild($canvas);
+            render();
+            callback();
         }
     };
 }(function() {
@@ -660,38 +768,9 @@ self['QrCreator'] = QrCreator;
         //---------------------------------------------------------------------
 
         // UTF-8 version
+        // https://github.com/nimiq/qr-creator/pull/17/files
         qrcode.stringToBytes = function(s) {
-            // http://stackoverflow.com/questions/18729405/how-to-convert-utf8-string-to-byte-array
-            function toUTF8Array(str) {
-                var utf8 = [];
-                for (var i = 0; i < str.length; i++) {
-                    var charcode = str.charCodeAt(i);
-                    if (charcode < 0x80) utf8.push(charcode);
-                    else if (charcode < 0x800) {
-                        utf8.push(0xc0 | (charcode >> 6),
-                            0x80 | (charcode & 0x3f));
-                    } else if (charcode < 0xd800 || charcode >= 0xe000) {
-                        utf8.push(0xe0 | (charcode >> 12),
-                            0x80 | ((charcode >> 6) & 0x3f),
-                            0x80 | (charcode & 0x3f));
-                    }
-                    // surrogate pair
-                    else {
-                        i++;
-                        // UTF-16 encodes 0x10000-0x10FFFF by
-                        // subtracting 0x10000 and splitting the
-                        // 20 bits of 0x0-0xFFFFF into two halves
-                        charcode = 0x10000 + (((charcode & 0x3ff) << 10) |
-                            (str.charCodeAt(i) & 0x3ff));
-                        utf8.push(0xf0 | (charcode >> 18),
-                            0x80 | ((charcode >> 12) & 0x3f),
-                            0x80 | ((charcode >> 6) & 0x3f),
-                            0x80 | (charcode & 0x3f));
-                    }
-                }
-                return utf8;
-            }
-            return toUTF8Array(s);
+            return (new TextEncoder()).encode(s);
         };
 
         //---------------------------------------------------------------------

@@ -1,11 +1,25 @@
-# QR Code Encoder
 
-<img src="https://nimiq.github.io/qr-creator/demo/qr-code-example.png"/>
+> This is a fork of
 
-A lightweight library generating stylish QR codes that also support gradient fills and rounded corners in only 12.2kB minified (4.75kB gzipped).
+## Acknowledgements
+
+- @Nimick for the original library this was forked from: <https://github.com/nimiq/qr-creator>
+
+- @Tomas-M https://github.com/nimiq/qr-creator/pull/17
+- @WickyNilliams https://github.com/nimiq/qr-creator/pull/11
+- @andrin-n-dream https://github.com/nimiq/qr-creator/pull/10
+
+The above PRs were integrated or modified in some way.
+
+## qr-creator
+
+<img src="https://konnorrogers.github.io/qr-creator/demo/qr-code-example.png"/>
+
+A lightweight library generating stylish QR codes that also support gradient fills, rounded corners, different colored corners, and logos in only ~13kB minified (~5kB gzipped).
 Try out the [demo](https://nimiq.github.io/qr-creator/demo)!
 
 ## Origin
+
 This library is a trimmed down version of [Lars Jung's jQuery.qrcode library](https://larsjung.de/jquery-qrcode/). Our library is however not based on jQuery anymore and doesnt make use of it. Lars Jung's library itself is based on this [QR code Generator](https://github.com/kazuhikoarase/qrcode-generator).
 
 All parts are licensed under the MIT License.
@@ -14,33 +28,29 @@ All parts are licensed under the MIT License.
 
 To install via npm:
 ```bash
-npm install --save qr-creator
+npm install --save @konnorr/qr-creator
 ```
 To install via yarn:
 ```bash
-yarn add qr-creator
+yarn add @konnorr/qr-creator
 ```
-Or use a cdn like [jsdelivr](http://www.jsdelivr.com/package/npm/qr-creator) or
-[unpkg](https://unpkg.com/browse/qr-creator@1.0.0/) (see [usage](#usage)).
+Or use a cdn like [jsdelivr](http://www.jsdelivr.com/package/npm/@konnorr/qr-creator) or
+[unpkg](https://unpkg.com/browse/@konnorr/qr-creator@2.0.0/) (see [usage](#usage)).
 
 ## Usage
-The library is available as a module and non-module version.
+
+The library is available as an ES Module.
 To import it as a module:
+
 ```javascript
   // from installed package for bundling with a module bundler like webpack:
   import QrCreator from 'qr-creator';
   // from cdn:
-  import QrCreator from 'https://cdn.jsdelivr.net/npm/qr-creator/dist/qr-creator.es6.min.js';
-```
-To use the non-module version:
-```html
-  <!-- from your project's code base -->
-  <script src="path/to/qr-creator.min.js"></script>
-  <!-- from cdn -->
-  <script src="https://cdn.jsdelivr.net/npm/qr-creator/dist/qr-creator.min.js"></script>
+  import QrCreator from 'https://cdn.jsdelivr.net/npm/qr-creator.js';
 ```
 
 Call the QrCreator API with a configuration object and a DOM element or canvas to render the QR code into:
+
 ```javascript
   QrCreator.render({
     text: 'some text',
@@ -58,8 +68,12 @@ text | String | "" | Any kind of text, also links, email addresses, any thing. T
 radius | 0 .. 0.5 | 0.5 | Defines how round the blocks should be. Numbers from 0 (squares) to 0.5 (maximum round) are supported.
 ecLevel | L, M, Q, H | L | Means "Error correction levels". The four values L, M, Q, and H will use %7, 15%, 25%, and 30% of the QR code for error correction respectively. So on one hand the code will get bigger but chances are also higher that it will be read without errors later on.
 fill | color or gradient | #000000 | What color you want your QR code to be. Use the demo to try different colors.
+cornerFill | color or gradient | #000000 | What color you want the 3 corners of your QR code to be. Use the demo to try different colors.
 background | color code | null | The background color or null for transparent background.
 size | int | 200 | The total size of the final QR code in pixels - it will be a square.
+image | string | null | The image (url or data uri) you want to display inside your QR code
+imageEcCover | 0-1 | 0.5 | How much of the center of the QR code should be covered by the image. The closer you get to 1, the more likely errors will occur in your QR code making it harder to scan.
+imageBackground | color or gradient | "transparent" | The background of your image. Useful if your image is transparent and you don't want pieces of the QR code bleeding into your image.
 
 If you want to fill the QR code with a gradient, use the following format:
 ```js
@@ -77,13 +91,6 @@ Where the position is specified as in [createLinearGradient](https://developer.m
 
 ## Trimmed down to be low weight
 The goal of the library is to generate QR codes only. For that reason we have removed all additional code such as GIF image generation, background image support, rendering a label on top, removed some dead code, and freed it from depending on jQuery. Also, the resulting library does not use any global variables, is all strict mode, and relies on modern browser standards instead.
-
-The result | Original | New
-:--- | ---: | ---:
-Lines of code | 2332 | 1556 (-33%)
-Size | 64kB | 50kB (-22%)
-Minified | 20.6kB | 11.95kB (-40%)
-Gzipped | 7.3kB | 4.77kB (-35%)
 
 ## Building
 
