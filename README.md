@@ -1,5 +1,5 @@
 
-> This is a fork of
+> This is a fork of https://github.com/nimiq/qr-creator
 
 ## Acknowledgements
 
