@@ -14,7 +14,6 @@
     "emitDeclarationOnly": true,
     "allowJs": true,
     "checkJs": true,
-    "verbatimModuleSyntax": true,
     "noImplicitOverride": true
   }
 }
