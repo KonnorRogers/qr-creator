@@ -1,10 +1,10 @@
 'use strict';
 /**
- * @param {Settings} options
- * @param {HTMLElement} $element
- * @param {() => void} callback - function to call on error
-*/
-var qrCodeGenerator = function(options, $element, callback) {}
+ * @param {Partial<Settings>} _options
+ * @param {HTMLElement} _element
+ * @param {() => void} _callback - function to call on error
+ */
+var qrCodeGenerator = function(_options, _element, _callback) {}
 
 /**
  * @typedef {1 | 2 | 3 | 4 | 5 | 6 | 7 | 8 | 9 | 10 | 11 | 12 | 13 | 14 | 15 | 16 | 17 | 18 | 19 | 20 | 21 | 22 | 23 | 24 | 25 | 26 | 27 | 28 | 29 | 30 | 31 | 32 | 33 | 34 | 35 | 36 | 37 | 38 | 39 | 40} VERSION_NUM
@@ -12,11 +12,23 @@ var qrCodeGenerator = function(options, $element, callback) {}
 
 /**
  * @typedef {{
-    type: "radial-gradient" | "linear-gradient"
-    position: Parameters<CanvasRenderingContext2D["createLinearGradient"]> | Parameters<CanvasRenderingContext2D["createRadialGradient"]>
-    colorStops: [number, string][]
-  }} GradientFill
+    type: "radial-gradient"
+    position: Parameters<CanvasRenderingContext2D["createRadialGradient"]>
+    colorStops: ColorStop[]
+  }} RadialGradient
 */
+
+/**
+ * @typedef {{
+    type: "linear-gradient"
+    position: Parameters<CanvasRenderingContext2D["createLinearGradient"]>
+    colorStops: ColorStop[]
+  }} LinearGradient
+*/
+
+/**
+ * @typedef {[number, string]} ColorStop
+ */
 
 
 /**
@@ -27,13 +39,12 @@ var qrCodeGenerator = function(options, $element, callback) {}
  * @property {number} Settings.left
  * @property {number} Settings.top
  * @property {number} Settings.size
- * @property {string | GradientFill} Settings.fill
+ * @property {string | LinearGradient | RadialGradient} Settings.fill
  * @property {string} Settings.background
  * @property {string} Settings.text
  * @property {number} Settings.radius
  * @property {number} Settings.quiet
-
- * @property {string | GradientFill} Settings.cornerFill - color to fill the corners
+ * @property {string | LinearGradient | RadialGradient} Settings.cornerFill - color to fill the corners
  * @property {string} Settings.image - url for the image
  * @property {string} Settings.imageBackground - color settings for the imageBackground
  * @property {number} Settings.imageEcCover - error correction to apply to the image
@@ -43,7 +54,7 @@ var qrCodeGenerator = function(options, $element, callback) {}
 // Library interface
 export default class QrCreator {
     /**
-     * @param {Settings} config
+     * @param {Partial<Settings>} config
      * @param {HTMLElement} $element
      * @param {() => void} callback
      */
@@ -413,7 +424,7 @@ globalThis['QrCreator'] = QrCreator;
     // // Register the plugin
     // // -------------------
     /**
-     * @param {Settings} options
+     * @param {Partial<Settings>} options
      * @param {HTMLElement} $element
      * @param {() => void} callback - function to call on error
      */
@@ -1121,9 +1132,9 @@ globalThis['QrCreator'] = QrCreator;
                         case QRMaskPattern.PATTERN000:
                             return function(i, j) { return (i + j) % 2 == 0; };
                         case QRMaskPattern.PATTERN001:
-                            return function(i, j) { return i % 2 == 0; };
+                            return function(i, _j) { return i % 2 == 0; };
                         case QRMaskPattern.PATTERN010:
-                            return function(i, j) { return j % 3 == 0; };
+                            return function(_i, j) { return j % 3 == 0; };
                         case QRMaskPattern.PATTERN011:
                             return function(i, j) { return (i + j) % 3 == 0; };
                         case QRMaskPattern.PATTERN100:
@@ -1770,7 +1781,7 @@ globalThis['QrCreator'] = QrCreator;
          */
         var qr8BitByte = function(data) {
             var _mode = QRMode.MODE_8BIT_BYTE
-            var _data = data
+            // var _data = data
             var _bytes = qrcode.stringToBytes(data)
             var _this = {};
 
@@ -1780,7 +1791,7 @@ globalThis['QrCreator'] = QrCreator;
 
 
              /** @type {(buffer: ReturnType<typeof qrBitBuffer>) => number} */
-            _this.getLength = function(buffer) {
+            _this.getLength = function(_buffer) {
                 return _bytes.length;
             };
 

@@ -1,5 +1,5 @@
 {
-  "name": "qr-creator",
+  "name": "@konnorr/qr-creator",
   "version": "1.0.0",
   "description": "Lightweight QR code generator for stylish QR codes",
   "keywords": [
@@ -12,8 +12,8 @@
     "lightweight",
     "small"
   ],
-  "repository": "git@github.com:nimiq/qr-creator.git",
-  "author": "Nimiq (www.nimiq.com)",
+  "repository": "git@github.com:konnorrogers/qr-creator.git",
+  "author": "Konnor Rogers",
   "license": "MIT",
   "main": "src/qr-creator.js",
   "module": "src/qr-creator.js",
@@ -27,7 +27,8 @@
   ],
   "scripts": {
     "build": "npm run clean && tsc",
-    "clean": "rimraf -g \"./src/**/*.d.ts\""
+    "clean": "rimraf -g \"./src/**/*.d.ts\"",
+    "prepublishOnly": "npm run build"
   },
   "devDependencies": {
     "rimraf": "^6.0.1",
