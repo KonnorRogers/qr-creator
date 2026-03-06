@@ -169,7 +169,6 @@ globalThis['QrCreator'] = QrCreator;
      * @param {boolean} sw
      */
     function drawModuleRoundedDark(ctx, l, t, r, b, rad, nw, ne, se, sw) {
-        //let moveTo = (x, y) => ctx.moveTo(Math.floor(x), Math.floor(y));
         if (nw) {
             ctx.moveTo(l + rad, t);
         } else {
