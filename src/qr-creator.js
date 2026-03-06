@@ -30,7 +30,6 @@ var qrCodeGenerator = function(_options, _element, _callback) {}
  * @typedef {[number, string]} ColorStop
  */
 
-
 /**
  * @typedef {Object} Settings
  * @property {VERSION_NUM} Settings.minVersion
