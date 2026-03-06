@@ -61,8 +61,7 @@ export default class QrCreator {
         qrCodeGenerator(config, $element, callback);
     }
 }
-// avoid that closure compiler strips these away
-QrCreator['render'] = QrCreator.render;
+
 // Make it safe for Node.
 globalThis['QrCreator'] = QrCreator;
 
