@@ -2,7 +2,7 @@
 /**
  * @param {Partial<Settings>} _options
  * @param {HTMLElement} _element
- * @param {() => void} _callback - function to call on error
+ * @param {() => void} [_callback] - function to call on error
  */
 var qrCodeGenerator = function(_options, _element, _callback) {}
 
@@ -31,41 +31,6 @@ var qrCodeGenerator = function(_options, _element, _callback) {}
  */
 
 /**
- * @typedef {Object} Settings
- * @property {VERSION_NUM} Settings.minVersion
- * @property {VERSION_NUM} Settings.maxVersion
- * @property {'L' | 'M' | 'Q' | 'H'} Settings.ecLevel - error correction level
- * @property {number} Settings.left
- * @property {number} Settings.top
- * @property {number} Settings.size
- * @property {string | LinearGradient | RadialGradient} Settings.fill
- * @property {string} Settings.background
- * @property {string} Settings.text
- * @property {number} Settings.radius
- * @property {number} Settings.quiet
- * @property {string | LinearGradient | RadialGradient} Settings.cornerFill - color to fill the corners
- * @property {string} Settings.image - url for the image
- * @property {string} Settings.imageBackground - color settings for the imageBackground
- * @property {number} Settings.imageEcCover - error correction to apply to the image
- * @property {number} Settings.imagePadding - padding to apply on the image
- */
-
-// Library interface
-export default class QrCreator {
-    /**
-     * @param {Partial<Settings>} config
-     * @param {HTMLElement} $element
-     * @param {() => void} callback
-     */
-    static render(config, $element, callback) {
-        qrCodeGenerator(config, $element, callback);
-    }
-}
-
-// Make it safe for Node.
-globalThis['QrCreator'] = QrCreator;
-
-/**
 * @typedef {Object} QrObject
 * @property {Settings["text"]} text
 * @property {Settings["ecLevel"]} level
@@ -75,6 +40,41 @@ globalThis['QrCreator'] = QrCreator;
 */
 
 
+
+
+/**
+ * @typedef {Object} Settings
+ * @property {VERSION_NUM} Settings.minVersion
+ * @property {VERSION_NUM} Settings.maxVersion
+ * @property {'L' | 'M' | 'Q' | 'H'} Settings.ecLevel - error correction level
+ * @property {number} Settings.left
+ * @property {number} Settings.top
+ * @property {number} Settings.size
+ * @property {string | LinearGradient | RadialGradient} Settings.fill
+ * @property {string | null} Settings.background
+ * @property {string} Settings.text
+ * @property {number} Settings.radius
+ * @property {number} Settings.quiet
+ * @property {string | LinearGradient | RadialGradient | null} Settings.cornerFill - color to fill the corners
+ * @property {string | null} Settings.image - url for the image
+ * @property {string | null} Settings.imageBackground - color settings for the imageBackground
+ * @property {number | null} Settings.imageEcCover - error correction to apply to the image, between 0-1, default is 0.5
+ * @property {number | null} Settings.imagePadding - padding to apply on the image
+ */
+
+// Library interface
+export class QrCreator {
+    /**
+     * @param {Partial<Settings>} config
+     * @param {HTMLElement} $element
+     * @param {() => void} [callback]
+     */
+    static render(config, $element, callback) {
+        qrCodeGenerator(config, $element, callback);
+    }
+}
+
+export default QrCreator
 
 /*! jquery-qrcode v0.14.0 - https://larsjung.de/jquery-qrcode/ */
 ;(function(vendor_qrcode) {
@@ -384,7 +384,7 @@ globalThis['QrCreator'] = QrCreator;
 
     // Default settings
     // ----------------
-    var defaults = {
+    var defaults = /** @type {Settings} */ ({
         // version range somewhere in 1 .. 40
         'minVersion': 1,
         'maxVersion': 40,
@@ -401,7 +401,7 @@ globalThis['QrCreator'] = QrCreator;
 
         // code color or image element
         'fill': '#000',
-        'cornerFill': '#000',
+        'cornerFill': null, // Falls back to fill
 
         // background color, `null` for transparent background
         'background': null,
@@ -416,14 +416,14 @@ globalThis['QrCreator'] = QrCreator;
         'quiet': 0,
         'image': null,
         'imageEcCover': 0.5
-    };
+    });
 
     // // Register the plugin
     // // -------------------
     /**
      * @param {Partial<Settings>} options
      * @param {HTMLElement} $element
-     * @param {() => void} callback - function to call on error
+     * @param {() => void} [callback] - function to call on error
      */
     qrCodeGenerator = function(options, $element, callback) {
         /**
@@ -449,7 +449,13 @@ globalThis['QrCreator'] = QrCreator;
         settings.imageEcCover = settings['imageEcCover'];
         settings.imagePadding = settings['imagePadding'];
 
-        var qr = createMinQRCode(settings.text, settings.ecLevel, settings.minVersion, settings.maxVersion, settings.quiet);
+        var qr = createMinQRCode(
+            settings.text,
+            settings.ecLevel,
+            settings.minVersion,
+            settings.maxVersion,
+            settings.quiet
+        );
         if (!qr) {
             return;
         }
@@ -467,10 +473,10 @@ globalThis['QrCreator'] = QrCreator;
                 if (context) {
                     context.clearRect(0, 0, $element.width, $element.height);
                 }
-                drawOnCanvas(qr, $element, settings);
+                drawOnCanvas(qr, $element, /** @type {Settings} */ (settings));
             } else {
                 if (qr) {
-                    const canvasEl = createCanvas(qr, settings);
+                    const canvasEl = createCanvas(qr, /** @type {Settings} */(settings));
                     if (canvasEl) {
                         canvasElement = canvasEl
                         $element.appendChild(canvasElement);
@@ -483,13 +489,16 @@ globalThis['QrCreator'] = QrCreator;
             const img = new Image();
             img.onload = function() {
                 if (!qr) { return }
+
+                const ecCover = /** @type {number} */ (settings.imageEcCover ?? defaults.imageEcCover)
+
                 const quietModuleCount = qr.moduleCount - settings.quiet * 2
                 const moduleSize = settings.size / quietModuleCount;
                 const ratio = img.naturalWidth / img.naturalHeight;
-                let maxImageWidth = settings.size * settings.imageEcCover
+                let maxImageWidth = settings.size * ecCover
                 maxImageWidth = Math.min(maxImageWidth, maxImageWidth * ratio)
 
-                let maxImageHeight = settings.size * settings.imageEcCover
+                let maxImageHeight = settings.size * ecCover
                 maxImageHeight = Math.min(maxImageHeight, maxImageHeight / ratio)
                 const dataPixels = quietModuleCount * quietModuleCount - (49 * 3 + 25);
                 const area = ({
@@ -497,7 +506,7 @@ globalThis['QrCreator'] = QrCreator;
                     'M': 0.15,
                     'Q': 0.25,
                     'H': 0.3
-                }[settings.ecLevel] * settings.imageEcCover * dataPixels) | 0;
+                }[settings.ecLevel] * ecCover * dataPixels) | 0;
                 var imageModuleWidth = Math.min(quietModuleCount, Math.sqrt(area * ratio) | 0, maxImageWidth);
                 var imageModuleHeight = (imageModuleWidth / ratio) | 0;
                 if (imageModuleHeight > quietModuleCount) {
@@ -509,6 +518,7 @@ globalThis['QrCreator'] = QrCreator;
                 const imageModuleLeft = ((qr.moduleCount / 2 - imageModuleWidth / 2) | 0);
                 const imageModuleTop = ((qr.moduleCount / 2 - imageModuleHeight / 2) | 0);
                 const isDark = qr.isDark;
+                /** @type {(row: number, col: number) => boolean} */
                 qr.isDark = function(row, col) {
                     if (imageModuleLeft <= col && col < imageModuleLeft + imageModuleWidth &&
                         imageModuleTop <= row && row < imageModuleTop + imageModuleHeight) {
@@ -553,7 +563,11 @@ globalThis['QrCreator'] = QrCreator;
                 }
                 callback()
             }
-            img.onerror = callback;
+            img.onerror = () => {
+                // on error, we render the qr code as normal without the image.
+                render()
+                callback();
+            }
             img.src = settings.image;
         } else {
             render();
