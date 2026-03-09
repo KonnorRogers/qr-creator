@@ -1,5 +1,6 @@
 {
   "name": "@konnorr/qr-creator",
+  "type": "module",
   "version": "1.0.0",
   "publishConfig": {
      "access": "public"
@@ -21,10 +22,9 @@
   "main": "src/qr-creator.js",
   "module": "src/qr-creator.js",
   "types": "src/qr-creator.d.ts",
+  "typings": "src/qr-creator.d.ts",
   "files": [
     "src",
-    "dist",
-    "types",
     "README.md",
     "LICENSE"
   ],

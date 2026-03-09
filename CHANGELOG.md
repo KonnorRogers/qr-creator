@@ -1,3 +1,7 @@
+# v1.0.1 - 2026-03-09
+
+- Adding `type: "module"` and added `typings` key.
+
 # v1.0.0 - 2026-03-06
 
 - Added jsdoc based typings and added all possible settings and generated `.d.ts` files for TypeScript users.
