@@ -34,3 +34,10 @@ label {
 input:not([type=checkbox]), select {
   display: block
 }
+
+pre {
+  background: #F2F2F2;
+  padding: 1rem;
+  border-radius: 8px;
+  color: black;
+}

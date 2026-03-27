@@ -5,6 +5,42 @@
     <meta charset="utf-8">
     <title>QR code creator demo</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+
+    <link rel="stylesheet" href="/demo/style.css">
+    <script type="module">
+      import QrCreator from '/src/qr-creator.js';
+      let availableSettings = ['text', 'radius', 'ecLevel', 'fill', 'background', 'size', 'image', 'imageEcCover', 'cornerFill', 'imageBackground'];
+
+      function readSettings() {
+        let settings = {}, el;
+        for (let setting of availableSettings) {
+          const value = document.querySelector('#'+setting).value;
+          if (value) {
+            settings[setting] = value
+          }
+        }
+        if (document.querySelector('#transparent').checked) {
+          settings.background = null;
+        }
+        return settings;
+      }
+
+      function renderQrCode() {
+        let time = new Date(),
+            container = document.querySelector('#qr-code'),
+            settings = readSettings();
+        container.innerHTML = '';
+        QrCreator.render(settings, container);
+        document.querySelector('#stats').innerText = 'Rendered in ' + (new Date()-time) + 'ms';
+        document.querySelector('#json').innerText = JSON.stringify(settings, null, 2);
+      }
+
+      for (let input of document.querySelectorAll('input, select')) {
+        input.addEventListener('change', renderQrCode);
+      }
+      renderQrCode();
+
+    </script>
 </head>
 
 <body class="state-loading">
@@ -32,46 +68,14 @@
       <label>Corner Color: <input id="cornerFill" type="color" value="#434FCE"></label>
       <label>Background: <input id="background" type="color"><input id="transparent" type="checkbox" checked> transparent</label>
       <label>Size: <input id="size" type="range" value="250" step="10" min="20" max="1000"></label>
-      <label>Image: <input id="image" type="text"></label>
+      <label>URL for Image: <input id="image" type="url"></label>
       <label>Image Error Correction Cover: <input id="imageEcCover" type="number" min="0" max="1" step="0.05" value="0.5"></label>
       <label>Image Background: <input id="imageBackground" type="color" value="#fff"></label>
     </section>
     <section id="parameters">
       <label>Parameters:</label>
-      <pre id="json"></pre>
+      <pre><code id="json"></code></pre>
     </section>
   </main>
-  <link rel="stylesheet" href="style.css">
-  <script type="module">
-    import QrCreator from '/src/qr-creator.js';
-    let availableSettings = ['text', 'radius', 'ecLevel', 'fill', 'background', 'size', 'image', 'imageEcCover', 'cornerFill', 'imageBackground'];
-
-    function readSettings() {
-      let settings = {}, el;
-      for (let setting of availableSettings) {
-        settings[setting] = document.querySelector('#'+setting).value;
-      }
-      if (document.querySelector('#transparent').checked) {
-        settings.background = null;
-      }
-      return settings;
-    }
-
-    function renderQrCode() {
-      let time = new Date(),
-          container = document.querySelector('#qr-code'),
-          settings = readSettings();
-      container.innerHTML = '';
-      QrCreator.render(settings, container);
-      document.querySelector('#stats').innerText = 'Rendered in ' + (new Date()-time) + 'ms';
-      document.querySelector('#json').innerText = JSON.stringify(settings, null, 2);
-    }
-
-    for (let input of document.querySelectorAll('input, select')) {
-      input.addEventListener('change', renderQrCode);
-    }
-    renderQrCode();
-
-  </script>
 </body>
 </html>

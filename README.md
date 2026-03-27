@@ -1,22 +1,27 @@
+> This is a fork of <https://github.com/nimiq/qr-creator>
 
-> This is a fork of https://github.com/nimiq/qr-creator
+## Why fork?
 
-## Acknowledgements
+The original library hasn't seen any updates in 6 years, and all the PRs have languished for anywhere from 2-4years with no comments.
 
-- @Nimick for the original library this was forked from: <https://github.com/nimiq/qr-creator>
+In <https://github.com/shoelace-style/webawesome/> we have a funky workaround to work with SSR:
 
-- @Tomas-M https://github.com/nimiq/qr-creator/pull/17
-- @WickyNilliams https://github.com/nimiq/qr-creator/pull/11
-- @andrin-n-dream https://github.com/nimiq/qr-creator/pull/10
+<https://github.com/shoelace-style/webawesome/blob/9df0572e1f09318fe0475564265166f5d0cfe105/packages/webawesome/src/components/qr-code/qr-code.ts#L72-L79>
 
-The above PRs were integrated or modified in some way.
+This is needed because of this line:
 
-## qr-creator
+<https://github.com/nimiq/qr-creator/blob/2ee3528ca26344d1891c642fad99160e0e57245b/src/qr-creator.js#L12>
+
+In addition, there was also a feature request for images in the center (i can't find the issue now) and wanted to integrate that for Web Awesome as well.
+
+I also wanted to add jsdoc comments for better autocomplete experience + type checking.
+
+## `@konnorr/qr-creator`
 
 <img src="https://konnorrogers.github.io/qr-creator/demo/qr-code-example.png"/>
 
 A lightweight library generating stylish QR codes that also support gradient fills, rounded corners, different colored corners, and logos in only ~13kB minified (~5kB gzipped).
-Try out the [demo](https://nimiq.github.io/qr-creator/demo)!
+Try out the [demo](https://konnorrogers.github.io/qr-creator/)!
 
 ## Origin
 
@@ -44,9 +49,9 @@ To import it as a module:
 
 ```javascript
   // from installed package for bundling with a module bundler like webpack:
-  import QrCreator from 'qr-creator';
+  import QrCreator from '@konnorr/qr-creator';
   // from cdn:
-  import QrCreator from 'https://cdn.jsdelivr.net/npm/qr-creator.js';
+  import QrCreator from 'https://cdn.jsdelivr.net/npm/@konnorr/qr-creator';
 ```
 
 Call the QrCreator API with a configuration object and a DOM element or canvas to render the QR code into:
@@ -102,3 +107,12 @@ and then to build the project:
 ```bash
 npm run build
 ```
+
+## Acknowledgements
+
+- @Nimick for the original library this was forked from: <https://github.com/nimiq/qr-creator>
+- @Tomas-M https://github.com/nimiq/qr-creator/pull/17
+- @WickyNilliams https://github.com/nimiq/qr-creator/pull/11
+- @andrin-n-dream https://github.com/nimiq/qr-creator/pull/10
+
+The above PRs were integrated or modified in some way.
