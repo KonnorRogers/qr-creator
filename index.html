@@ -8,7 +8,7 @@
 
     <link rel="stylesheet" href="demo/style.css">
     <script type="module">
-      import canvasToSvg from "https://esm.sh/canvas-to-svg";
+      import { Context } from "https://esm.sh/@konnorr/svgcanvas";
       import QrCreator from './src/qr-creator.js';
 
       let availableSettings = ['text', 'radius', 'ecLevel', 'fill', 'background', 'size', 'image', 'imageEcCover', 'cornerFill', 'imageBackground'];
@@ -27,50 +27,6 @@
         return settings;
       }
 
-      // Hopefully this won't be needed once this merges:
-      // https://github.com/tone-row/canvas-to-svg/pull/6
-      function patchArcTo(ctx) {
-        ctx.arcTo = function (x1, y1, x2, y2, r) {
-          const x0 = this.__currentPosition.x, y0 = this.__currentPosition.y;
-          const a = [x0 - x1, y0 - y1], b = [x2 - x1, y2 - y1];
-          const na = Math.hypot(a[0], a[1]), nb = Math.hypot(b[0], b[1]);
-          if (na === 0 || nb === 0 || r === 0) { this.lineTo(x1, y1); return; }
-
-          const ua = [a[0] / na, a[1] / na], ub = [b[0] / nb, b[1] / nb];
-          let cos = ua[0] * ub[0] + ua[1] * ub[1];
-          cos = Math.max(-1, Math.min(1, cos));
-          const ang = Math.acos(cos);
-          if (Math.abs(ang) < 1e-9 || Math.abs(ang - Math.PI) < 1e-9) { this.lineTo(x1, y1); return; }
-
-          const distEdge = r / Math.tan(ang / 2);
-          const t1 = [x1 + ua[0] * distEdge, y1 + ua[1] * distEdge]; // tangent point on incoming edge
-          const t2 = [x1 + ub[0] * distEdge, y1 + ub[1] * distEdge]; // tangent point on outgoing edge
-
-          const bis = [ua[0] + ub[0], ua[1] + ub[1]];
-          const nbis = Math.hypot(bis[0], bis[1]);
-          const ubis = [bis[0] / nbis, bis[1] / nbis];
-          const cdist = r / Math.sin(ang / 2);
-          const c = [x1 + ubis[0] * cdist, y1 + ubis[1] * cdist];    // arc center
-
-          // Choose the sweep whose arc midpoint sits nearest the corner (rounds it off).
-          const a1 = Math.atan2(t1[1] - c[1], t1[0] - c[0]);
-          const a2 = Math.atan2(t2[1] - c[1], t2[0] - c[0]);
-          const midOf = (s) => {
-            let d = a2 - a1;
-            if (s) { if (d < 0) d += 2 * Math.PI; } else { if (d > 0) d -= 2 * Math.PI; }
-            const m = a1 + d / 2;
-            return [c[0] + r * Math.cos(m), c[1] + r * Math.sin(m)];
-          };
-          const dP1 = (p) => Math.hypot(p[0] - x1, p[1] - y1);
-          const sweep = dP1(midOf(1)) < dP1(midOf(0)) ? 1 : 0;
-
-          this.lineTo(t1[0], t1[1]);
-          this.__addPathCommand(`A ${r} ${r} 0 0 ${sweep} ${t2[0]} ${t2[1]}`);
-          this.__currentPosition = { x: t2[0], y: t2[1] };
-        };
-        return ctx;
-      }
-
       function renderQrCode() {
         let time = new Date(),
             container = document.querySelector('#qr-code'),
@@ -81,8 +37,8 @@
         document.querySelector('#json').innerText = JSON.stringify(settings, null, 2);
 
         const size = 256 * 2
-        const context = new canvasToSvg(size, size);
-        patchArcTo(context)
+        const context = new Context(size, size);
+
         QrCreator.render({...settings, context: context, size })
         const svg = context.getSerializedSvg(true)
         document.querySelector("#svg").innerHTML = svg

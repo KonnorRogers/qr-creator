@@ -149,7 +149,6 @@ export default QrCreator
      * @param {Settings} settings
      */
     function drawBackground(_qr, context, settings) {
-        console.log({ settings })
         if (settings.background) {
             context.fillStyle = settings.background;
             context.fillRect(settings.left, settings.top, settings.size, settings.size);
