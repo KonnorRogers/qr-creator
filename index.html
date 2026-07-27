@@ -8,7 +8,9 @@
 
     <link rel="stylesheet" href="demo/style.css">
     <script type="module">
+      import { Context } from "https://esm.sh/@konnorr/svgcanvas";
       import QrCreator from './src/qr-creator.js';
+
       let availableSettings = ['text', 'radius', 'ecLevel', 'fill', 'background', 'size', 'image', 'imageEcCover', 'cornerFill', 'imageBackground'];
 
       function readSettings() {
@@ -33,12 +35,21 @@
         QrCreator.render(settings, container);
         document.querySelector('#stats').innerText = 'Rendered in ' + (new Date()-time) + 'ms';
         document.querySelector('#json').innerText = JSON.stringify(settings, null, 2);
+
+        const size = 256 * 2
+        const context = new Context(size, size);
+
+        QrCreator.render({...settings, context: context, size })
+        const svg = context.getSerializedSvg(true)
+        document.querySelector("#svg").innerHTML = svg
+        document.querySelector("#svg-output").textContent = svg
       }
 
       for (let input of document.querySelectorAll('input, select')) {
         input.addEventListener('change', renderQrCode);
       }
       renderQrCode();
+
 
     </script>
 </head>
@@ -77,6 +88,15 @@
         <label>Parameters:</label>
         <pre><code id="json"></code></pre>
       </section>
+    </div>
+
+    <div>
+      SVG Rendering:
+
+      <div id="svg">
+      </div>
+
+      <output><pre><code id="svg-output"></code></pre></output>
     </div>
   </main>
 </body>

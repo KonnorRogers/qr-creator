@@ -1,3 +1,7 @@
+# v1.1.0 - 2026-07-27
+
+- Allow passing a `2DContext` to `render()` to be able to output an SVG using libraries like <https://github.com/tone-row/canvas-to-svg>
+
 # v1.0.1 - 2026-03-09
 
 - Adding `type: "module"` and added `typings` key.

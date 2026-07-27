@@ -79,6 +79,7 @@ size | int | 200 | The total size of the final QR code in pixels - it will be a 
 image | string | null | The image (url or data uri) you want to display inside your QR code
 imageEcCover | 0-1 | 0.5 | How much of the center of the QR code should be covered by the image. The closer you get to 1, the more likely errors will occur in your QR code making it harder to scan.
 imageBackground | color or gradient | "transparent" | The background of your image. Useful if your image is transparent and you don't want pieces of the QR code bleeding into your image.
+context | CanvasRenderingContext2D | null | Allows passing a rendering context. This is useful if you plan to use the same rendering to grab an SVG. An example can be found in the demo how this works.
 
 If you want to fill the QR code with a gradient, use the following format:
 ```js

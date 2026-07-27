@@ -60,6 +60,7 @@ var qrCodeGenerator = function(_options, _element, _callback) {}
  * @property {string | null} Settings.imageBackground - color settings for the imageBackground
  * @property {number | null} Settings.imageEcCover - error correction to apply to the image, between 0-1, default is 0.5
  * @property {number | null} Settings.imagePadding - padding to apply on the image
+ * @property {CanvasRenderingContext2D | null} Settings.context - a 2d context. This can be used in place of the `<canvas>` context and is useful for things like patching with `canvasToSvg` by shadowing all the draw calls.
  */
 
 // Library interface
@@ -345,7 +346,7 @@ export default QrCreator
 
     /**
      * @param {QrObject | undefined} qr
-     * @param {HTMLCanvasElement} canvas
+     * @param {HTMLCanvasElement | null} canvas
      * @param {Settings} settings
      */
     function drawOnCanvas(qr, canvas, settings) {
@@ -354,7 +355,7 @@ export default QrCreator
             return null;
         }
 
-        var context = canvas.getContext('2d');
+        var context = settings.context || canvas?.getContext('2d');
 
         if (!context) { return canvas }
 
@@ -474,6 +475,10 @@ export default QrCreator
                     context.clearRect(0, 0, $element.width, $element.height);
                 }
                 drawOnCanvas(qr, $element, /** @type {Settings} */ (settings));
+            } else if (settings.context) {
+                const context = settings.context
+                context.clearRect(0, 0, settings.size, settings.size);
+                drawOnCanvas(qr, null, /** @type {Settings} */ (settings));
             } else {
                 if (qr) {
                     const canvasEl = createCanvas(qr, /** @type {Settings} */(settings));
